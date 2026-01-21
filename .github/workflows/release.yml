@@ -1,0 +1,76 @@
+name: Package and Release
+
+on:
+  push:
+    tags:
+      - 'v*'
+  workflow_dispatch:
+    inputs:
+      version:
+        description: 'Version tag (e.g., v1.0.0)'
+        required: false
+
+permissions:
+  contents: write
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Get version
+        id: version
+        run: |
+          if [ -n "${{ github.event.inputs.version }}" ]; then
+            echo "version=${{ github.event.inputs.version }}" >> $GITHUB_OUTPUT
+          else
+            echo "version=${GITHUB_REF#refs/tags/}" >> $GITHUB_OUTPUT
+          fi
+
+      - name: Update version in metadata
+        run: |
+          VERSION="${{ steps.version.outputs.version }}"
+          VERSION="${VERSION#v}"  # Remove 'v' prefix
+          sed -i "s/\"Version\": \"[^\"]*\"/\"Version\": \"$VERSION\"/" plasmoid/package/metadata.json
+          cat plasmoid/package/metadata.json
+
+      - name: Package plasmoid
+        run: |
+          cd plasmoid/package
+          zip -r ../../lgtv-remote.plasmoid . -x "*.pyc" -x "__pycache__/*"
+
+      - name: Upload artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: lgtv-remote-plasmoid
+          path: lgtv-remote.plasmoid
+
+      - name: Create Release
+        if: startsWith(github.ref, 'refs/tags/')
+        uses: softprops/action-gh-release@v1
+        with:
+          files: lgtv-remote.plasmoid
+          generate_release_notes: true
+          body: |
+            ## Installation
+
+            ### Prerequisites
+            Install Python websockets:
+            - **NixOS**: Add `(python3.withPackages (ps: [ps.websockets]))` to your systemPackages
+            - **Other distros**: `pip install websockets`
+
+            ### Install Widget
+            **GUI**: System Settings → Appearance → Plasma Style → Get New... → Install from File → select `lgtv-remote.plasmoid`
+
+            **CLI**: `kpackagetool6 -t Plasma/Applet -i lgtv-remote.plasmoid`
+
+            ### After Installing
+            1. Right-click panel → Add Widgets → search "LG TV Remote"
+            2. Enter your TV's IP address and a name
+            3. Click Auth and accept on your TV
+
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}

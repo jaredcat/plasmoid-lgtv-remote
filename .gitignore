@@ -1,0 +1,29 @@
+# Build artifacts
+build/
+*.so
+*.o
+*.moc
+*_autogen/
+*.plasmoid
+
+# IDE
+.idea/
+.vscode/
+*.swp
+*.swo
+*~
+
+# Python
+__pycache__/
+*.pyc
+*.pyo
+.venv/
+venv/
+
+# Nix
+result
+result-*
+
+# OS
+.DS_Store
+Thumbs.db
