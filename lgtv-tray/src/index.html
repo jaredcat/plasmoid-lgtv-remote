@@ -1,0 +1,116 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>LG TV Remote</title>
+  <link rel="stylesheet" href="style.css">
+</head>
+<body>
+  <div class="container">
+    <!-- Header -->
+    <header>
+      <h1>LG TV Remote</h1>
+      <div class="header-right">
+        <div class="status">
+          <span id="status-dot" class="dot disconnected"></span>
+          <span id="status-text">Not Connected</span>
+        </div>
+        <button class="btn-icon quit-btn" onclick="quitApp()" title="Quit">&#10005;</button>
+      </div>
+    </header>
+
+    <!-- Settings Panel (collapsible) -->
+    <section id="settings-panel" class="settings collapsed">
+      <button class="settings-toggle" onclick="toggleSettings()">
+        <span class="icon">&#9881;</span> Settings
+        <span class="arrow">&#9662;</span>
+      </button>
+      <div class="settings-content">
+        <div class="field">
+          <label for="tv-name">TV Name</label>
+          <input type="text" id="tv-name" placeholder="e.g., LivingRoomTV">
+        </div>
+        <div class="field">
+          <label for="tv-ip">TV IP Address</label>
+          <input type="text" id="tv-ip" placeholder="192.168.1.100">
+        </div>
+        <div class="field checkbox">
+          <label>
+            <input type="checkbox" id="use-ssl" checked>
+            Use SSL (recommended)
+          </label>
+        </div>
+        <div class="button-row">
+          <button class="btn secondary" onclick="authenticate()">Authenticate</button>
+          <button class="btn primary" onclick="connectTv()">Connect</button>
+        </div>
+        
+        <div class="settings-divider"></div>
+        <label class="section-label">Global Shortcut</label>
+        
+        <div class="field checkbox">
+          <label>
+            <input type="checkbox" id="shortcut-enabled" onchange="toggleShortcut()">
+            Enable global shortcut
+          </label>
+        </div>
+        <div class="field shortcut-field">
+          <input type="text" id="shortcut-input" placeholder="Click and press keys..." readonly>
+          <small class="hint" id="shortcut-hint">Click to record shortcut</small>
+        </div>
+      </div>
+    </section>
+
+    <!-- Navigation D-Pad -->
+    <section class="dpad">
+      <div class="dpad-grid">
+        <div></div>
+        <button class="btn dpad-btn" onclick="sendButton('UP')" title="Up">&#9650;</button>
+        <div></div>
+        <button class="btn dpad-btn" onclick="sendButton('LEFT')" title="Left">&#9664;</button>
+        <button class="btn dpad-btn ok-btn" onclick="sendButton('ENTER')" title="OK">OK</button>
+        <button class="btn dpad-btn" onclick="sendButton('RIGHT')" title="Right">&#9654;</button>
+        <div></div>
+        <button class="btn dpad-btn" onclick="sendButton('DOWN')" title="Down">&#9660;</button>
+        <div></div>
+      </div>
+    </section>
+
+    <!-- Volume Controls -->
+    <section class="volume">
+      <button class="btn" onclick="volumeDown()" title="Volume Down">
+        <span class="icon">&#128265;</span> Vol -
+      </button>
+      <button class="btn icon-btn" onclick="setMute(true)" title="Mute">&#128263;</button>
+      <button class="btn icon-btn" onclick="setMute(false)" title="Unmute">&#128266;</button>
+      <button class="btn" onclick="volumeUp()" title="Volume Up">
+        Vol + <span class="icon">&#128266;</span>
+      </button>
+    </section>
+
+    <!-- Quick Actions -->
+    <section class="actions">
+      <button class="btn action-btn" onclick="powerOn()" title="Power On">
+        <span class="icon">&#9211;</span> Power On
+      </button>
+      <button class="btn action-btn danger" onclick="powerOff()" title="Power Off">
+        <span class="icon">&#9211;</span> Power Off
+      </button>
+      <button class="btn action-btn" onclick="sendButton('HOME')" title="Home">
+        <span class="icon">&#8962;</span> Home
+      </button>
+      <button class="btn action-btn" onclick="sendButton('BACK')" title="Back">
+        <span class="icon">&#8592;</span> Back
+      </button>
+    </section>
+
+    <!-- Keyboard hint -->
+    <footer>
+      <small>Arrows, Enter, Backspace, +/-, Shift+=Unmute, Shift+-=Mute</small>
+    </footer>
+  </div>
+
+  <script src="main.js"></script>
+</body>
+</html>

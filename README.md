@@ -1,9 +1,21 @@
-# LG TV Remote for KDE Plasma 6
+# LG TV Remote
 
-A KDE Plasma 6 widget to control your LG webOS TV directly from your desktop.
+Control your LG webOS TV directly from your desktop.
 
 ![Plasma Widget](https://img.shields.io/badge/Plasma-6.0+-blue)
+![Cross Platform](https://img.shields.io/badge/Platform-Windows%20%7C%20macOS%20%7C%20Linux-blue)
 ![License](https://img.shields.io/badge/License-MIT-green)
+
+## Available Versions
+
+| Version | Platform | Description |
+|---------|----------|-------------|
+| **[Plasma Widget](plasmoid/)** | KDE Plasma 6 | Native Plasma panel widget |
+| **[Tray App](lgtv-tray/)** | Windows, macOS, Linux | Cross-platform system tray application |
+
+---
+
+## KDE Plasma Widget
 
 ## Features
 
@@ -128,6 +140,14 @@ Install the Python websockets module (see Step 1 above).
 - Enable "Wake on LAN" in TV network settings
 - Wait a few seconds after Power Off before trying Power On
 
+---
+
+## Cross-Platform Tray App
+
+For Windows, macOS, or non-KDE Linux desktops, see the **[lgtv-tray](lgtv-tray/)** directory.
+
+Built with [Tauri](https://tauri.app/) for a lightweight native experience (~10MB).
+
 ## License
 
 MIT License
@@ -135,4 +155,5 @@ MIT License
 ## Credits
 
 - Protocol based on [LGWebOSRemote](https://github.com/klattimer/LGWebOSRemote)
-- Built for KDE Plasma 6
+- Plasma widget built for KDE Plasma 6
+- Tray app built with Tauri + Rust

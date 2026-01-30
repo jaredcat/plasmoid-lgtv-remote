@@ -1,0 +1,21 @@
+# Build outputs
+src-tauri/target/
+dist/
+
+# Generated icons (except SVG source)
+src-tauri/icons/*.png
+src-tauri/icons/*.ico
+src-tauri/icons/*.icns
+
+# IDE
+.idea/
+.vscode/
+*.swp
+*.swo
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Logs
+*.log

@@ -1,0 +1,378 @@
+use futures_util::{SinkExt, StreamExt};
+use native_tls::TlsConnector;
+use serde::{Deserialize, Serialize};
+use serde_json::{json, Value};
+use std::sync::Arc;
+use tokio::net::TcpStream;
+use tokio::sync::Mutex;
+use tokio_tungstenite::tungstenite::Message;
+use tokio_tungstenite::{MaybeTlsStream, WebSocketStream};
+
+type WsStream = WebSocketStream<MaybeTlsStream<TcpStream>>;
+
+#[derive(Debug, Clone, Serialize, Deserialize)]
+pub struct CommandResult {
+    pub success: bool,
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub message: Option<String>,
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub error: Option<String>,
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub client_key: Option<String>,
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub mac: Option<String>,
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub payload: Option<Value>,
+}
+
+impl CommandResult {
+    pub fn ok() -> Self {
+        Self {
+            success: true,
+            message: None,
+            error: None,
+            client_key: None,
+            mac: None,
+            payload: None,
+        }
+    }
+
+    pub fn ok_with_message(msg: &str) -> Self {
+        Self {
+            success: true,
+            message: Some(msg.to_string()),
+            error: None,
+            client_key: None,
+            mac: None,
+            payload: None,
+        }
+    }
+}
+
+pub struct TvConnection {
+    ws: Option<Arc<Mutex<WsStream>>>,
+    input_ws: Option<Arc<Mutex<WsStream>>>,
+    msg_id: u32,
+    pub connected: bool,
+    pub ip: String,
+    pub name: String,
+    pub use_ssl: bool,
+}
+
+impl TvConnection {
+    pub fn new() -> Self {
+        Self {
+            ws: None,
+            input_ws: None,
+            msg_id: 0,
+            connected: false,
+            ip: String::new(),
+            name: String::new(),
+            use_ssl: true,
+        }
+    }
+
+    fn handshake_payload(client_key: Option<&str>) -> Value {
+        let mut payload = json!({
+            "type": "register",
+            "id": "register_0",
+            "payload": {
+                "forcePairing": false,
+                "pairingType": "PROMPT",
+                "manifest": {
+                    "manifestVersion": 1,
+                    "appVersion": "1.1",
+                    "signed": {
+                        "created": "20140509",
+                        "appId": "com.lge.test",
+                        "vendorId": "com.lge",
+                        "localizedAppNames": {"": "LG Remote"},
+                        "localizedVendorNames": {"": "LG Electronics"},
+                        "permissions": [
+                            "LAUNCH", "LAUNCH_WEBAPP", "APP_TO_APP", "CLOSE",
+                            "TEST_OPEN", "TEST_PROTECTED", "CONTROL_AUDIO",
+                            "CONTROL_DISPLAY", "CONTROL_INPUT_JOYSTICK",
+                            "CONTROL_INPUT_MEDIA_RECORDING",
+                            "CONTROL_INPUT_MEDIA_PLAYBACK", "CONTROL_INPUT_TV",
+                            "CONTROL_POWER", "READ_APP_STATUS", "READ_CURRENT_CHANNEL",
+                            "READ_INPUT_DEVICE_LIST", "READ_NETWORK_STATE",
+                            "READ_RUNNING_APPS", "READ_TV_CHANNEL_LIST",
+                            "WRITE_NOTIFICATION_TOAST", "READ_POWER_STATE",
+                            "READ_COUNTRY_INFO", "CONTROL_MOUSE_AND_KEYBOARD",
+                            "CONTROL_INPUT_TEXT"
+                        ],
+                        "serial": "2f930e2d2cfe083771f68e4fe7bb07"
+                    },
+                    "permissions": [
+                        "LAUNCH", "LAUNCH_WEBAPP", "APP_TO_APP", "CLOSE",
+                        "TEST_OPEN", "TEST_PROTECTED", "CONTROL_AUDIO",
+                        "CONTROL_DISPLAY", "CONTROL_INPUT_JOYSTICK",
+                        "CONTROL_INPUT_MEDIA_RECORDING",
+                        "CONTROL_INPUT_MEDIA_PLAYBACK", "CONTROL_INPUT_TV",
+                        "CONTROL_POWER", "READ_APP_STATUS", "READ_CURRENT_CHANNEL",
+                        "READ_INPUT_DEVICE_LIST", "READ_NETWORK_STATE",
+                        "READ_RUNNING_APPS", "READ_TV_CHANNEL_LIST",
+                        "WRITE_NOTIFICATION_TOAST", "READ_POWER_STATE",
+                        "READ_COUNTRY_INFO", "CONTROL_MOUSE_AND_KEYBOARD",
+                        "CONTROL_INPUT_TEXT"
+                    ],
+                    "signatures": [{
+                        "signatureVersion": 1,
+                        "signature": "eyJhbGdvcml0aG0iOiJSU0EtU0hBMjU2Iiwia2V5SWQiOiJ0ZXN0LXNpZ25pbmctY2VydCIsInNpZ25hdHVyZVZlcnNpb24iOjF9.hrVRgjCwXVvE2OOSpDZ58hR+59aFNwYDyjQgKk3auukd7pcegmE2CzPCa0bJ0ZsRAcKkCTJrWo5iDzNhMBWRyaMOv5zWSrthlf7G128qvIlpMT0YNY+n/FaOHE73uLrS/g7swl3/qH/BGFG2Hu4RlL48eb3lLKqTt2xKHdCs6Cd4RMfJPYnzgvI4BNrFUKsjkcu+WD4OO2A27Pq1n50cMchmcaXadJhGrOqH5YmHdOCj5NSHzJYrsW0HPlpuAx/ECMeIZYDh6RMqaFM2DXzdKX9NmmyqzJ3o/0lkk/N97gfVRLW5hA29yeAwaCViZNCP8iC9aO0q9fQojoa7NQnAtw=="
+                    }]
+                }
+            }
+        });
+
+        if let Some(key) = client_key {
+            payload["payload"]["client-key"] = json!(key);
+        }
+
+        payload
+    }
+
+    async fn connect_ws(uri: &str, use_ssl: bool) -> Result<WsStream, String> {
+        if use_ssl {
+            let connector = TlsConnector::builder()
+                .danger_accept_invalid_certs(true)
+                .danger_accept_invalid_hostnames(true)
+                .build()
+                .map_err(|e| format!("TLS error: {}", e))?;
+
+            let connector = tokio_tungstenite::Connector::NativeTls(connector);
+
+            let (ws, _) = tokio_tungstenite::connect_async_tls_with_config(
+                uri,
+                None,
+                false,
+                Some(connector),
+            )
+            .await
+            .map_err(|e| format!("WebSocket connection failed: {}", e))?;
+
+            Ok(ws)
+        } else {
+            let (ws, _) = tokio_tungstenite::connect_async(uri)
+                .await
+                .map_err(|e| format!("WebSocket connection failed: {}", e))?;
+            Ok(ws)
+        }
+    }
+
+    pub async fn connect(
+        &mut self,
+        name: &str,
+        ip: &str,
+        client_key: Option<&str>,
+        use_ssl: bool,
+    ) -> Result<CommandResult, String> {
+        self.disconnect().await;
+
+        self.name = name.to_string();
+        self.ip = ip.to_string();
+        self.use_ssl = use_ssl;
+
+        let protocol = if use_ssl { "wss" } else { "ws" };
+        let port = if use_ssl { 3001 } else { 3000 };
+        let uri = format!("{}://{}:{}", protocol, ip, port);
+
+        let ws = tokio::time::timeout(
+            std::time::Duration::from_secs(5),
+            Self::connect_ws(&uri, use_ssl),
+        )
+        .await
+        .map_err(|_| "Connection timeout".to_string())?
+        .map_err(|e| e.to_string())?;
+
+        let ws = Arc::new(Mutex::new(ws));
+        self.ws = Some(ws.clone());
+
+        // Send handshake
+        let handshake = Self::handshake_payload(client_key);
+        {
+            let mut ws = ws.lock().await;
+            ws.send(Message::Text(handshake.to_string()))
+                .await
+                .map_err(|e| format!("Failed to send handshake: {}", e))?;
+        }
+
+        // Wait for registration response
+        let timeout_secs = if client_key.is_some() { 5 } else { 60 };
+        let response = tokio::time::timeout(std::time::Duration::from_secs(timeout_secs), async {
+            loop {
+                let msg = {
+                    let mut ws = ws.lock().await;
+                    ws.next().await
+                };
+
+                match msg {
+                    Some(Ok(Message::Text(text))) => {
+                        if let Ok(data) = serde_json::from_str::<Value>(&text) {
+                            if data["type"] == "registered" {
+                                let new_key = data["payload"]["client-key"]
+                                    .as_str()
+                                    .map(|s| s.to_string());
+                                return Ok(new_key);
+                            } else if data["type"] == "error" {
+                                return Err(format!(
+                                    "Registration error: {}",
+                                    data["error"].as_str().unwrap_or("Unknown")
+                                ));
+                            }
+                            // Keep waiting for other message types (like pairing prompts)
+                        }
+                    }
+                    Some(Ok(_)) => continue,
+                    Some(Err(e)) => return Err(format!("WebSocket error: {}", e)),
+                    None => return Err("Connection closed".to_string()),
+                }
+            }
+        })
+        .await
+        .map_err(|_| "Registration timeout - check TV for pairing prompt".to_string())?;
+
+        let new_key = response?;
+        self.connected = true;
+
+        // Connect input socket for button commands
+        if let Err(e) = self.connect_input_socket().await {
+            log::warn!("Could not connect input socket: {}", e);
+        }
+
+        let mut result = CommandResult::ok_with_message("Connected");
+        result.client_key = new_key;
+        Ok(result)
+    }
+
+    async fn connect_input_socket(&mut self) -> Result<(), String> {
+        let response = self.send_command(
+            "ssap://com.webos.service.networkinput/getPointerInputSocket",
+            None,
+        ).await?;
+
+        let socket_path = response["payload"]["socketPath"]
+            .as_str()
+            .ok_or("No socket path in response")?;
+
+        let ws = Self::connect_ws(socket_path, self.use_ssl).await?;
+        self.input_ws = Some(Arc::new(Mutex::new(ws)));
+        Ok(())
+    }
+
+    pub async fn disconnect(&mut self) {
+        self.connected = false;
+        if let Some(ws) = self.input_ws.take() {
+            let _ = ws.lock().await.close(None).await;
+        }
+        if let Some(ws) = self.ws.take() {
+            let _ = ws.lock().await.close(None).await;
+        }
+    }
+
+    pub async fn send_command(&mut self, uri: &str, payload: Option<Value>) -> Result<Value, String> {
+        let ws = self.ws.as_ref().ok_or("Not connected")?;
+
+        self.msg_id += 1;
+        let msg = json!({
+            "type": "request",
+            "id": format!("cmd_{}", self.msg_id),
+            "uri": uri,
+            "payload": payload.unwrap_or(json!({}))
+        });
+
+        let mut ws = ws.lock().await;
+        ws.send(Message::Text(msg.to_string()))
+            .await
+            .map_err(|e| format!("Send failed: {}", e))?;
+
+        // Wait for response
+        let response = tokio::time::timeout(std::time::Duration::from_secs(3), async {
+            while let Some(msg) = ws.next().await {
+                match msg {
+                    Ok(Message::Text(text)) => {
+                        if let Ok(data) = serde_json::from_str::<Value>(&text) {
+                            return Ok(data);
+                        }
+                    }
+                    Ok(_) => continue,
+                    Err(e) => return Err(format!("WebSocket error: {}", e)),
+                }
+            }
+            Err("Connection closed".to_string())
+        })
+        .await
+        .map_err(|_| "Command timeout".to_string())??;
+
+        Ok(response)
+    }
+
+    pub async fn send_button(&mut self, button: &str) -> Result<CommandResult, String> {
+        // Reconnect input socket if needed
+        if self.input_ws.is_none() {
+            self.connect_input_socket().await?;
+        }
+
+        let input_ws = self.input_ws.as_ref().ok_or("Input socket not available")?;
+        let cmd = format!("type:button\nname:{}\n\n", button.to_uppercase());
+
+        let mut ws = input_ws.lock().await;
+        ws.send(Message::Text(cmd))
+            .await
+            .map_err(|e| format!("Button send failed: {}", e))?;
+
+        Ok(CommandResult::ok())
+    }
+
+    pub async fn volume_up(&mut self) -> Result<CommandResult, String> {
+        self.send_command("ssap://audio/volumeUp", None).await?;
+        Ok(CommandResult::ok())
+    }
+
+    pub async fn volume_down(&mut self) -> Result<CommandResult, String> {
+        self.send_command("ssap://audio/volumeDown", None).await?;
+        Ok(CommandResult::ok())
+    }
+
+    pub async fn set_mute(&mut self, mute: bool) -> Result<CommandResult, String> {
+        self.send_command("ssap://audio/setMute", Some(json!({ "mute": mute }))).await?;
+        Ok(CommandResult::ok())
+    }
+
+    pub async fn power_off(&mut self) -> Result<CommandResult, String> {
+        self.send_command("ssap://system/turnOff", None).await?;
+        self.connected = false;
+        Ok(CommandResult::ok_with_message("TV powered off"))
+    }
+
+    pub async fn get_network_info(&mut self) -> Result<Value, String> {
+        self.send_command("ssap://com.webos.service.connectionmanager/getStatus", None).await
+    }
+}
+
+pub fn wake_on_lan(mac: &str) -> Result<CommandResult, String> {
+    let mac_clean = mac.replace([':', '-'], "");
+    let mac_bytes: [u8; 6] = hex::decode(&mac_clean)
+        .map_err(|_| "Invalid MAC address")?
+        .try_into()
+        .map_err(|_| "Invalid MAC address length")?;
+
+    let magic_packet = wake_on_lan::MagicPacket::new(&mac_bytes);
+    magic_packet
+        .send()
+        .map_err(|e| format!("WoL send failed: {}", e))?;
+
+    Ok(CommandResult::ok_with_message("Wake-on-LAN packet sent"))
+}
+
+// Need to add hex as a dependency or implement manually
+mod hex {
+    pub fn decode(s: &str) -> Result<Vec<u8>, ()> {
+        if s.len() % 2 != 0 {
+            return Err(());
+        }
+        (0..s.len())
+            .step_by(2)
+            .map(|i| u8::from_str_radix(&s[i..i + 2], 16).map_err(|_| ()))
+            .collect()
+    }
+}
