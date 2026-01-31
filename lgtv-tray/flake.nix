@@ -75,23 +75,48 @@
           WEBKIT_DISABLE_COMPOSITING_MODE = "1";
         };
 
-        packages.default = pkgs.rustPlatform.buildRustPackage {
+        packages.default = pkgs.stdenv.mkDerivation {
           pname = "lgtv-tray";
           version = "1.0.0";
           
-          src = ./src-tauri;
-          
-          cargoLock = {
-            lockFile = ./src-tauri/Cargo.lock;
-          };
+          src = ./.;
           
           inherit buildInputs;
           nativeBuildInputs = nativeBuildInputs ++ [ pkgs.makeWrapper ];
           
-          postInstall = ''
-            wrapProgram $out/bin/lgtv-tray \
-              --prefix LD_LIBRARY_PATH : "${pkgs.lib.makeLibraryPath buildInputs}"
+          buildPhase = ''
+            # Generate icons
+            ./generate-icons.sh
+            
+            # Build with Tauri
+            cargo tauri build --bundles none
           '';
+          
+          installPhase = ''
+            mkdir -p $out/bin $out/share/applications $out/share/icons/hicolor/128x128/apps
+            
+            cp src-tauri/target/release/lgtv-tray $out/bin/
+            cp src-tauri/icons/128x128.png $out/share/icons/hicolor/128x128/apps/lgtv-tray.png
+            
+            cat > $out/share/applications/lgtv-tray.desktop << EOF
+            [Desktop Entry]
+            Name=LG TV Remote
+            Comment=Control your LG webOS TV
+            Exec=$out/bin/lgtv-tray
+            Icon=lgtv-tray
+            Type=Application
+            Categories=Utility;
+            EOF
+            
+            wrapProgram $out/bin/lgtv-tray \
+              --prefix LD_LIBRARY_PATH : "${pkgs.lib.makeLibraryPath (buildInputs ++ runtimeLibs)}"
+          '';
+        };
+
+        # Quick run without full install
+        apps.default = {
+          type = "app";
+          program = "${self.packages.${system}.default}/bin/lgtv-tray";
         };
       }
     );

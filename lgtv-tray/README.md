@@ -17,9 +17,43 @@ A system tray application for controlling LG webOS TVs. Works on **Windows**, **
 
 ## Installation
 
+### NixOS / Nix
+
+**Run directly** (no install):
+```bash
+nix run github:jaredcat/plasmoid-lgtv-remote?dir=lgtv-tray
+```
+
+**Install to profile**:
+```bash
+nix profile install github:jaredcat/plasmoid-lgtv-remote?dir=lgtv-tray
+```
+
+**Add to NixOS configuration** (flake-based):
+```nix
+# flake.nix
+{
+  inputs.lgtv-remote.url = "github:jaredcat/plasmoid-lgtv-remote?dir=lgtv-tray";
+}
+
+# configuration.nix
+{ inputs, pkgs, ... }: {
+  environment.systemPackages = [
+    inputs.lgtv-remote.packages.${pkgs.system}.default
+  ];
+}
+```
+
+**Build locally**:
+```bash
+cd lgtv-tray
+nix build
+./result/bin/lgtv-tray
+```
+
 ### Pre-built Binaries
 
-Download from the [Releases](https://github.com/YOUR_USERNAME/plasmoid-lgtv-remote/releases) page:
+Download from the [Releases](https://github.com/jaredcat/plasmoid-lgtv-remote/releases) page:
 
 - **Windows**: `lgtv-tray_x.x.x_x64-setup.exe` or `.msi`
 - **macOS**: `lgtv-tray_x.x.x_x64.dmg`
