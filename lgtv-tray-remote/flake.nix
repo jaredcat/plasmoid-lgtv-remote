@@ -95,6 +95,8 @@
             imagemagick
             makeWrapper
             copyDesktopItems
+            fontconfig
+            dejavu_fonts
           ];
 
           inherit buildInputs;
@@ -140,7 +142,9 @@ EOF
             wrapProgram $out/bin/lgtv-tray-remote \
               --prefix LD_LIBRARY_PATH : "${pkgs.lib.makeLibraryPath (buildInputs ++ runtimeLibs)}" \
               --set WEBKIT_DISABLE_COMPOSITING_MODE 1 \
-              --set WEBKIT_DISABLE_DMABUF_RENDERER 1
+              --set WEBKIT_DISABLE_DMABUF_RENDERER 1 \
+              --set FONTCONFIG_FILE "${pkgs.fontconfig.out}/etc/fonts/fonts.conf" \
+              --prefix XDG_DATA_DIRS : "${pkgs.dejavu_fonts}/share"
             
             runHook postInstall
           '';

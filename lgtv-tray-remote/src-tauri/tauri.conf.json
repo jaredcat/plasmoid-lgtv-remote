@@ -18,7 +18,7 @@
         "label": "main",
         "title": "LG TV Remote",
         "width": 320,
-        "height": 500,
+        "height": 520,
         "resizable": true,
         "visible": false,
         "decorations": false,

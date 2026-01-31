@@ -16,15 +16,15 @@
           <span id="status-dot" class="dot disconnected"></span>
           <span id="status-text">Not Connected</span>
         </div>
-        <button class="btn-icon quit-btn" onclick="quitApp()" title="Quit">&#10005;</button>
+        <button class="btn-icon quit-btn" onclick="quitApp()" title="Quit">&times;</button>
       </div>
     </header>
 
     <!-- Settings Panel (collapsible) -->
     <section id="settings-panel" class="settings collapsed">
       <button class="settings-toggle" onclick="toggleSettings()">
-        <span class="icon">&#9881;</span> Settings
-        <span class="arrow">&#9662;</span>
+        <span class="icon">&#x2699;</span> Settings
+        <span class="arrow">&#x25BC;</span>
       </button>
       <div class="settings-content">
         <div class="field">
@@ -66,13 +66,13 @@
     <section class="dpad">
       <div class="dpad-grid">
         <div></div>
-        <button class="btn dpad-btn" onclick="sendButton('UP')" title="Up">&#9650;</button>
+        <button class="btn dpad-btn" onclick="sendButton('UP')" title="Up">&uarr;</button>
         <div></div>
-        <button class="btn dpad-btn" onclick="sendButton('LEFT')" title="Left">&#9664;</button>
+        <button class="btn dpad-btn" onclick="sendButton('LEFT')" title="Left">&larr;</button>
         <button class="btn dpad-btn ok-btn" onclick="sendButton('ENTER')" title="OK">OK</button>
-        <button class="btn dpad-btn" onclick="sendButton('RIGHT')" title="Right">&#9654;</button>
+        <button class="btn dpad-btn" onclick="sendButton('RIGHT')" title="Right">&rarr;</button>
         <div></div>
-        <button class="btn dpad-btn" onclick="sendButton('DOWN')" title="Down">&#9660;</button>
+        <button class="btn dpad-btn" onclick="sendButton('DOWN')" title="Down">&darr;</button>
         <div></div>
       </div>
     </section>
@@ -80,28 +80,28 @@
     <!-- Volume Controls -->
     <section class="volume">
       <button class="btn" onclick="volumeDown()" title="Volume Down">
-        <span class="icon">&#128265;</span> Vol -
+        <span class="icon">-</span> Vol
       </button>
-      <button class="btn icon-btn" onclick="setMute(true)" title="Mute">&#128263;</button>
-      <button class="btn icon-btn" onclick="setMute(false)" title="Unmute">&#128266;</button>
+      <button class="btn icon-btn" onclick="setMute(true)" title="Mute">M</button>
+      <button class="btn icon-btn" onclick="setMute(false)" title="Unmute">U</button>
       <button class="btn" onclick="volumeUp()" title="Volume Up">
-        Vol + <span class="icon">&#128266;</span>
+        Vol <span class="icon">+</span>
       </button>
     </section>
 
     <!-- Quick Actions -->
     <section class="actions">
       <button class="btn action-btn" onclick="powerOn()" title="Power On">
-        <span class="icon">&#9211;</span> Power On
+        Power On
       </button>
       <button class="btn action-btn danger" onclick="powerOff()" title="Power Off">
-        <span class="icon">&#9211;</span> Power Off
+        Power Off
       </button>
       <button class="btn action-btn" onclick="sendButton('HOME')" title="Home">
-        <span class="icon">&#8962;</span> Home
+        Home
       </button>
       <button class="btn action-btn" onclick="sendButton('BACK')" title="Back">
-        <span class="icon">&#8592;</span> Back
+        &larr; Back
       </button>
     </section>
 

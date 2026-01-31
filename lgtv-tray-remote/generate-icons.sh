@@ -34,9 +34,9 @@ else
 fi
 
 # Generate Windows .ico
-if command -v convert &> /dev/null; then
+if command -v magick &> /dev/null; then
     echo "Generating Windows .ico..."
-    convert "$ICON_DIR/32x32.png" "$ICON_DIR/128x128.png" "$ICON_DIR/128x128@2x.png" "$ICON_DIR/icon.ico"
+    magick "$ICON_DIR/32x32.png" "$ICON_DIR/128x128.png" "$ICON_DIR/128x128@2x.png" "$ICON_DIR/icon.ico"
 elif command -v icotool &> /dev/null; then
     icotool -c -o "$ICON_DIR/icon.ico" "$ICON_DIR/32x32.png" "$ICON_DIR/128x128.png"
 else

@@ -29,7 +29,7 @@ Or add to your NixOS configuration:
 ```nix
 nix.settings = {
   substituters = [ "https://lgtv-tray-remote.cachix.org" ];
-  trusted-public-keys = [ "lgtv-tray-remote.cachix.org-1:lgtv-tray-remote.cachix.org-1:no3KeuRIc/+Msy8eQLsIVy29FZ85KI2GC6/jJkMMrvg=" ];
+  trusted-public-keys = [ "lgtv-tray-remote.cachix.org-1:no3KeuRIc/+Msy8eQLsIVy29FZ85KI2GC6/jJkMMrvg=" ];
 };
 ```
 

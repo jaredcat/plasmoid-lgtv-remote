@@ -14,12 +14,15 @@ permissions:
   contents: write
 
 jobs:
-  # Get version from tag or input
+  # Get version and generate icons
   prepare:
     runs-on: ubuntu-latest
     outputs:
       version: ${{ steps.version.outputs.version }}
     steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
       - name: Get version
         id: version
         run: |
@@ -29,6 +32,21 @@ jobs:
             echo "version=${GITHUB_REF#refs/tags/}" >> $GITHUB_OUTPUT
           fi
 
+      - name: Install icon tools
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y librsvg2-bin imagemagick icoutils
+
+      - name: Generate icons
+        working-directory: lgtv-tray-remote
+        run: ./generate-icons.sh
+
+      - name: Upload icons
+        uses: actions/upload-artifact@v4
+        with:
+          name: icons
+          path: lgtv-tray-remote/src-tauri/icons/
+
   # Build KDE Plasmoid
   build-plasmoid:
     needs: prepare
@@ -36,7 +54,7 @@ jobs:
     with:
       version: ${{ needs.prepare.outputs.version }}
 
-  # Build Tauri tray app
+  # Build Tauri tray app (needs prepare for icons artifact)
   build-tray:
     needs: prepare
     uses: ./.github/workflows/build-tray.yml
