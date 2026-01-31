@@ -35,19 +35,19 @@ nix.settings = {
 
 **Run directly** (no install):
 ```bash
-nix run github:jaredcat/plasmoid-lgtv-remote?dir=lgtv-tray
+nix run github:jaredcat/plasmoid-lgtv-remote?dir=lgtv-tray-remote
 ```
 
 **Install to profile**:
 ```bash
-nix profile install github:jaredcat/plasmoid-lgtv-remote?dir=lgtv-tray
+nix profile install github:jaredcat/plasmoid-lgtv-remote?dir=lgtv-tray-remote
 ```
 
 **Add to NixOS configuration** (flake-based):
 ```nix
 # flake.nix
 {
-  inputs.lgtv-remote.url = "github:jaredcat/plasmoid-lgtv-remote?dir=lgtv-tray";
+  inputs.lgtv-remote.url = "github:jaredcat/plasmoid-lgtv-remote?dir=lgtv-tray-remote";
 }
 
 # configuration.nix
@@ -60,9 +60,9 @@ nix profile install github:jaredcat/plasmoid-lgtv-remote?dir=lgtv-tray
 
 **Build locally**:
 ```bash
-cd lgtv-tray
+cd lgtv-tray-remote
 nix build
-./result/bin/lgtv-tray
+./result/bin/lgtv-tray-remote
 ```
 
 ### Pre-built Binaries
@@ -80,7 +80,7 @@ Download from the [Releases](https://github.com/jaredcat/plasmoid-lgtv-remote/re
 If you have Nix with flakes enabled:
 
 ```bash
-cd lgtv-tray
+cd lgtv-tray-remote
 
 # Enter development shell with all dependencies
 nix develop
@@ -212,7 +212,7 @@ Settings are stored in:
 ### Project Structure
 
 ```
-lgtv-tray/
+lgtv-tray-remote/
 ├── src/                    # Frontend (HTML/CSS/JS)
 │   ├── index.html
 │   ├── style.css

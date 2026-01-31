@@ -1,5 +1,5 @@
 [package]
-name = "lgtv-tray"
+name = "lgtv-tray-remote"
 version = "1.0.0"
 description = "Cross-platform system tray remote for LG webOS TVs"
 authors = [""]

@@ -76,7 +76,7 @@
         };
 
         packages.default = pkgs.rustPlatform.buildRustPackage {
-          pname = "lgtv-tray";
+          pname = "lgtv-tray-remote";
           version = "1.0.0";
           
           src = ./.;
@@ -124,20 +124,20 @@
             
             mkdir -p $out/bin $out/share/applications $out/share/icons/hicolor/128x128/apps
             
-            cp src-tauri/target/release/lgtv-tray $out/bin/
-            cp src-tauri/icons/128x128.png $out/share/icons/hicolor/128x128/apps/lgtv-tray.png
+            cp src-tauri/target/release/lgtv-tray-remote $out/bin/
+            cp src-tauri/icons/128x128.png $out/share/icons/hicolor/128x128/apps/lgtv-tray-remote.png
             
-            cat > $out/share/applications/lgtv-tray.desktop << EOF
+            cat > $out/share/applications/lgtv-tray-remote.desktop << EOF
 [Desktop Entry]
 Name=LG TV Remote
 Comment=Control your LG webOS TV
-Exec=$out/bin/lgtv-tray
-Icon=lgtv-tray
+Exec=$out/bin/lgtv-tray-remote
+Icon=lgtv-tray-remote
 Type=Application
 Categories=Utility;
 EOF
             
-            wrapProgram $out/bin/lgtv-tray \
+            wrapProgram $out/bin/lgtv-tray-remote \
               --prefix LD_LIBRARY_PATH : "${pkgs.lib.makeLibraryPath (buildInputs ++ runtimeLibs)}" \
               --set WEBKIT_DISABLE_COMPOSITING_MODE 1 \
               --set WEBKIT_DISABLE_DMABUF_RENDERER 1
@@ -152,7 +152,7 @@ EOF
         # Quick run without full install
         apps.default = {
           type = "app";
-          program = "${self.packages.${system}.default}/bin/lgtv-tray";
+          program = "${self.packages.${system}.default}/bin/lgtv-tray-remote";
         };
       }
     );
