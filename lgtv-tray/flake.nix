@@ -46,7 +46,7 @@
           librsvg
           imagemagick
           
-          # Tauri CLI (installed via cargo)
+          # Tauri CLI
           cargo-tauri
         ];
 
@@ -75,42 +75,78 @@
           WEBKIT_DISABLE_COMPOSITING_MODE = "1";
         };
 
-        packages.default = pkgs.stdenv.mkDerivation {
+        packages.default = pkgs.rustPlatform.buildRustPackage {
           pname = "lgtv-tray";
           version = "1.0.0";
           
           src = ./.;
           
-          inherit buildInputs;
-          nativeBuildInputs = nativeBuildInputs ++ [ pkgs.makeWrapper ];
+          cargoRoot = "src-tauri";
+          buildAndTestSubdir = "src-tauri";
           
-          buildPhase = ''
+          cargoLock = {
+            lockFile = ./src-tauri/Cargo.lock;
+          };
+
+          nativeBuildInputs = with pkgs; [
+            pkg-config
+            cargo-tauri
+            librsvg
+            imagemagick
+            makeWrapper
+            copyDesktopItems
+          ];
+
+          inherit buildInputs;
+
+          postPatch = ''
+            patchShebangs generate-icons.sh
+          '';
+
+          preBuild = ''
             # Generate icons
             ./generate-icons.sh
-            
-            # Build with Tauri
-            cargo tauri build --bundles none
           '';
-          
+
+          # Skip default cargo build, use tauri instead
+          buildPhase = ''
+            runHook preBuild
+            
+            cd src-tauri
+            cargo tauri build --no-bundle
+            cd ..
+            
+            runHook postBuild
+          '';
+
           installPhase = ''
+            runHook preInstall
+            
             mkdir -p $out/bin $out/share/applications $out/share/icons/hicolor/128x128/apps
             
             cp src-tauri/target/release/lgtv-tray $out/bin/
             cp src-tauri/icons/128x128.png $out/share/icons/hicolor/128x128/apps/lgtv-tray.png
             
             cat > $out/share/applications/lgtv-tray.desktop << EOF
-            [Desktop Entry]
-            Name=LG TV Remote
-            Comment=Control your LG webOS TV
-            Exec=$out/bin/lgtv-tray
-            Icon=lgtv-tray
-            Type=Application
-            Categories=Utility;
-            EOF
+[Desktop Entry]
+Name=LG TV Remote
+Comment=Control your LG webOS TV
+Exec=$out/bin/lgtv-tray
+Icon=lgtv-tray
+Type=Application
+Categories=Utility;
+EOF
             
             wrapProgram $out/bin/lgtv-tray \
-              --prefix LD_LIBRARY_PATH : "${pkgs.lib.makeLibraryPath (buildInputs ++ runtimeLibs)}"
+              --prefix LD_LIBRARY_PATH : "${pkgs.lib.makeLibraryPath (buildInputs ++ runtimeLibs)}" \
+              --set WEBKIT_DISABLE_COMPOSITING_MODE 1 \
+              --set WEBKIT_DISABLE_DMABUF_RENDERER 1
+            
+            runHook postInstall
           '';
+
+          # Tauri embeds the frontend, no separate check needed
+          doCheck = false;
         };
 
         # Quick run without full install
