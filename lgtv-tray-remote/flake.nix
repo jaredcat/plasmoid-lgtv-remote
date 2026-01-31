@@ -97,6 +97,7 @@
             copyDesktopItems
             fontconfig
             dejavu_fonts
+            gsettings-desktop-schemas
           ];
 
           inherit buildInputs;
@@ -143,8 +144,11 @@ EOF
               --prefix LD_LIBRARY_PATH : "${pkgs.lib.makeLibraryPath (buildInputs ++ runtimeLibs)}" \
               --set WEBKIT_DISABLE_COMPOSITING_MODE 1 \
               --set WEBKIT_DISABLE_DMABUF_RENDERER 1 \
-              --set FONTCONFIG_FILE "${pkgs.fontconfig.out}/etc/fonts/fonts.conf" \
-              --prefix XDG_DATA_DIRS : "${pkgs.dejavu_fonts}/share"
+              --prefix XDG_DATA_DIRS : "/run/current-system/sw/share" \
+              --prefix XDG_DATA_DIRS : "${pkgs.dejavu_fonts}/share" \
+              --prefix XDG_DATA_DIRS : "${pkgs.hicolor-icon-theme}/share" \
+              --prefix XDG_DATA_DIRS : "${pkgs.gsettings-desktop-schemas}/share/gsettings-schemas/${pkgs.gsettings-desktop-schemas.name}" \
+              --prefix GIO_EXTRA_MODULES : "${pkgs.glib-networking}/lib/gio/modules"
             
             runHook postInstall
           '';
