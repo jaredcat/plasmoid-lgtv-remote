@@ -2,7 +2,7 @@
 set -e
 
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
-PACKAGE_DIR="$SCRIPT_DIR/plasmoid/package"
+PACKAGE_DIR="$SCRIPT_DIR/package"
 OUTPUT_NAME="lgtv-remote.plasmoid"
 OUTPUT_PATH="$SCRIPT_DIR/$OUTPUT_NAME"
 

@@ -26,11 +26,11 @@
 
             shellHook = ''
               echo "═══════════════════════════════════════════════════════"
-              echo "  LG TV Remote - Development Shell"
+              echo "  LG TV Remote Plasmoid - Development Shell"
               echo "═══════════════════════════════════════════════════════"
               echo ""
               echo "Install the widget:"
-              echo "  cd plasmoid && ./install.sh"
+              echo "  ./install.sh"
               echo ""
               echo "Test widget:"
               echo "  plasmawindowed com.codekitties.lgtv.remote"
