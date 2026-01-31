@@ -19,6 +19,20 @@ A system tray application for controlling LG webOS TVs. Works on **Windows**, **
 
 ### NixOS / Nix
 
+**Enable binary cache** (recommended - avoids building from source):
+```bash
+# One-time setup
+nix run nixpkgs#cachix -- use lgtv-tray-remote
+```
+
+Or add to your NixOS configuration:
+```nix
+nix.settings = {
+  substituters = [ "https://lgtv-tray-remote.cachix.org" ];
+  trusted-public-keys = [ "lgtv-tray-remote.cachix.org-1:lgtv-tray-remote.cachix.org-1:no3KeuRIc/+Msy8eQLsIVy29FZ85KI2GC6/jJkMMrvg=" ];
+};
+```
+
 **Run directly** (no install):
 ```bash
 nix run github:jaredcat/plasmoid-lgtv-remote?dir=lgtv-tray
