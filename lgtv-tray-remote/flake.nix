@@ -36,6 +36,9 @@
 
           # For system tray
           libappindicator-gtk3
+
+          # Emoji font so UI emoji render consistently on NixOS
+          noto-fonts-color-emoji
         ];
 
         nativeBuildInputs = with pkgs; [
@@ -77,7 +80,7 @@
 
         packages.default = pkgs.rustPlatform.buildRustPackage {
           pname = "lgtv-tray-remote";
-          version = "1.2.0";
+          version = "1.2.1";
 
           src = ./.;
 
@@ -146,6 +149,7 @@ EOF
               --set WEBKIT_DISABLE_DMABUF_RENDERER 1 \
               --prefix XDG_DATA_DIRS : "/run/current-system/sw/share" \
               --prefix XDG_DATA_DIRS : "${pkgs.dejavu_fonts}/share" \
+              --prefix XDG_DATA_DIRS : "${pkgs.noto-fonts-color-emoji}/share" \
               --prefix XDG_DATA_DIRS : "${pkgs.hicolor-icon-theme}/share" \
               --prefix XDG_DATA_DIRS : "${pkgs.gsettings-desktop-schemas}/share/gsettings-schemas/${pkgs.gsettings-desktop-schemas.name}" \
               --prefix GIO_EXTRA_MODULES : "${pkgs.glib-networking}/lib/gio/modules"
