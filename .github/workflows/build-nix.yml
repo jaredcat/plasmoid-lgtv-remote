@@ -2,6 +2,8 @@ name: Build Nix
 
 on:
   push:
+    branches:
+      - dev
     tags:
       - 'v*'
   workflow_dispatch:

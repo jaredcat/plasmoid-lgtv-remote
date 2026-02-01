@@ -1,0 +1,35 @@
+# Build on push to dev branch (test builds before release).
+# Artifacts are available from the Actions run; no GitHub Release is created.
+name: Build (dev)
+
+on:
+  push:
+    branches:
+      - dev
+
+jobs:
+  prepare:
+    runs-on: ubuntu-latest
+    outputs:
+      version: ${{ steps.version.outputs.version }}
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Set dev version
+        id: version
+        run: |
+          SHORT_SHA="${GITHUB_SHA::7}"
+          echo "version=0.0.0-dev.${SHORT_SHA}" >> $GITHUB_OUTPUT
+
+  build-plasmoid:
+    needs: prepare
+    uses: ./.github/workflows/build-plasmoid.yml
+    with:
+      version: ${{ needs.prepare.outputs.version }}
+
+  build-tray:
+    needs: prepare
+    uses: ./.github/workflows/build-tray.yml
+    with:
+      version: ${{ needs.prepare.outputs.version }}
