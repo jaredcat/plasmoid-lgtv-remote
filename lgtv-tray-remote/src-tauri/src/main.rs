@@ -93,8 +93,61 @@ async fn set_active_tv(
     }
 }
 
+/// Spawns a background task that pings the TV every 25s while connected.
+/// Never stops pinging until connection is dropped or disconnected.
+/// Emits "connection-lost" to the frontend when keepalive detects a dead connection.
+fn spawn_keepalive(state: Arc<AppState>, app: tauri::AppHandle) {
+    tauri::async_runtime::spawn(async move {
+        let mut interval = tokio::time::interval(std::time::Duration::from_secs(25));
+        interval.set_missed_tick_behavior(tokio::time::MissedTickBehavior::Skip);
+        loop {
+            interval.tick().await;
+            let mut tv = state.tv.lock().await;
+            if !tv.connected {
+                log::debug!("Keepalive: exiting (not connected)");
+                break;
+            }
+            log::debug!("Keepalive: sending ping");
+            match tv.keepalive_ping().await {
+                Ok(()) => {
+                    log::debug!("Keepalive: ok");
+                    // Refresh input socket (d-pad, enter, back, etc.) so it doesn't go stale;
+                    // the TV can close it while the main SSAP socket stays open.
+                    log::debug!("Keepalive: refreshing input socket");
+                    match tv.refresh_input_socket().await {
+                        Ok(()) => log::debug!("Keepalive: input socket refreshed"),
+                        Err(e) => {
+                            log::warn!("Keepalive: refresh input socket failed: {} (retrying in 3s)", e);
+                            drop(tv);
+                            tokio::time::sleep(std::time::Duration::from_secs(3)).await;
+                            let mut tv = state.tv.lock().await;
+                            if tv.connected {
+                                if let Err(e2) = tv.refresh_input_socket().await {
+                                    log::warn!("Keepalive: refresh input socket failed again: {} (will retry next cycle)", e2);
+                                } else {
+                                    log::debug!("Keepalive: input socket refreshed on retry");
+                                }
+                            }
+                        }
+                    }
+                }
+                Err(e) => {
+                    log::warn!("Keepalive failed, connection dropped: {}", e);
+                    if let Some(window) = app.get_webview_window("main") {
+                        let _ = window.emit("connection-lost", ());
+                    }
+                    break;
+                }
+            }
+        }
+    });
+}
+
 #[tauri::command]
-async fn connect(state: tauri::State<'_, Arc<AppState>>) -> Result<CommandResult, String> {
+async fn connect(
+    app: tauri::AppHandle,
+    state: tauri::State<'_, Arc<AppState>>,
+) -> Result<CommandResult, String> {
     let config = state.config.lock().await;
     let (name, tv_config) = config
         .get_active_tv()
@@ -118,29 +171,13 @@ async fn connect(state: tauri::State<'_, Arc<AppState>>) -> Result<CommandResult
         let _ = config.save();
     }
 
-    // Spawn keepalive task to prevent idle connection drops (routers/TVs often close idle sockets)
-    let state_keepalive = state.inner().clone();
-    tauri::async_runtime::spawn(async move {
-        let mut interval = tokio::time::interval(std::time::Duration::from_secs(25));
-        interval.set_missed_tick_behavior(tokio::time::MissedTickBehavior::Skip);
-        loop {
-            interval.tick().await;
-            let mut tv = state_keepalive.tv.lock().await;
-            if !tv.connected {
-                break;
-            }
-            if let Err(e) = tv.keepalive_ping().await {
-                log::warn!("Keepalive failed, connection dropped: {}", e);
-                break;
-            }
-        }
-    });
-
+    spawn_keepalive(state.inner().clone(), app);
     Ok(result)
 }
 
 #[tauri::command]
 async fn authenticate(
+    app: tauri::AppHandle,
     state: tauri::State<'_, Arc<AppState>>,
     name: String,
     ip: String,
@@ -189,6 +226,7 @@ async fn authenticate(
         config.save()?;
     }
 
+    spawn_keepalive(state.inner().clone(), app);
     Ok(result)
 }
 
