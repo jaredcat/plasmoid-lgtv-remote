@@ -108,6 +108,18 @@ nix develop
 cargo tauri build
 ```
 
+**Running the dev build on NixOS:** Use the flake directly (e.g. after a push to `dev`):
+
+```bash
+nix run github:jaredcat/plasmoid-lgtv-remote?ref=dev&dir=lgtv-tray-remote
+```
+
+Or from a local checkout: 
+
+```bash
+cd lgtv-tray-remote && nix run .#default
+```
+
 #### Manual Setup
 
 ##### Prerequisites

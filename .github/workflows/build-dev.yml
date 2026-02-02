@@ -19,8 +19,9 @@ jobs:
       - name: Set dev version
         id: version
         run: |
-          SHORT_SHA="${GITHUB_SHA::7}"
-          echo "version=0.0.0-dev.${SHORT_SHA}" >> $GITHUB_OUTPUT
+          # Single source of truth: .github/scripts/dev-version.sh (0.0.0-<N>, MSI-compatible)
+          VERSION=$(bash .github/scripts/dev-version.sh)
+          echo "version=$VERSION" >> $GITHUB_OUTPUT
 
   build-plasmoid:
     needs: prepare

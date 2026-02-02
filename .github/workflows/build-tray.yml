@@ -49,7 +49,7 @@ jobs:
         with:
           workspaces: './lgtv-tray-remote/src-tauri -> target'
 
-      - name: "Update version (single source: tag → Cargo.toml, tauri.conf.json, flake.nix)"
+      - name: Update version in Tauri config
         shell: bash
         run: |
           VERSION="${{ inputs.version }}"

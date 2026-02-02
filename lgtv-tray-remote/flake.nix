@@ -51,6 +51,9 @@
 
           # Tauri CLI
           cargo-tauri
+
+          # Check for outdated dependencies
+          cargo-outdated
         ];
 
         # Runtime library path for system tray
@@ -70,6 +73,7 @@
             echo "Commands:"
             echo "  cargo tauri dev    - Run in development mode"
             echo "  cargo tauri build  - Build for production"
+            echo "  cargo outdated     - Check for outdated dependencies"
             echo "  ./generate-icons.sh - Generate icon files"
             echo ""
           '';
@@ -147,6 +151,7 @@ EOF
               --prefix LD_LIBRARY_PATH : "${pkgs.lib.makeLibraryPath (buildInputs ++ runtimeLibs)}" \
               --set WEBKIT_DISABLE_COMPOSITING_MODE 1 \
               --set WEBKIT_DISABLE_DMABUF_RENDERER 1 \
+              --set TAURI_AUTOSTART_EXEC lgtv-tray-remote \
               --prefix XDG_DATA_DIRS : "/run/current-system/sw/share" \
               --prefix XDG_DATA_DIRS : "${pkgs.dejavu_fonts}/share" \
               --prefix XDG_DATA_DIRS : "${pkgs.noto-fonts-color-emoji}/share" \

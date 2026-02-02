@@ -21,6 +21,7 @@ jobs:
           nix_path: nixpkgs=channel:nixos-unstable
 
       - name: Setup Cachix
+        if: github.ref_type == 'tag'
         uses: cachix/cachix-action@v15
         with:
           name: lgtv-tray-remote

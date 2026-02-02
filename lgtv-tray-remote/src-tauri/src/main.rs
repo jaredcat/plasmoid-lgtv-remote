@@ -20,6 +20,8 @@ use tv::{CommandResult, TvConnection};
 
 #[cfg(feature = "autostart")]
 use tauri_plugin_autostart::{MacosLauncher, ManagerExt};
+#[cfg(all(feature = "autostart", target_os = "linux"))]
+use auto_launch::LinuxLaunchMode;
 
 // Track window visibility ourselves since is_visible() can be unreliable
 static WINDOW_VISIBLE: AtomicBool = AtomicBool::new(false);
@@ -425,15 +427,51 @@ fn get_app_version(app: tauri::AppHandle) -> String {
     app.package_info().version.to_string()
 }
 
+/// On Linux (e.g. NixOS), when set, use this as the Exec path for autostart instead of the
+/// current executable. Use a stable path or command name (e.g. `lgtv-tray-remote`) so autostart
+/// keeps working across package version updates. Unset on other platforms.
+#[cfg(target_os = "linux")]
+const AUTOSTART_EXEC_ENV: &str = "TAURI_AUTOSTART_EXEC";
+
 #[cfg(feature = "autostart")]
 #[tauri::command]
 fn get_autostart_enabled(app: tauri::AppHandle) -> Result<bool, String> {
+    #[cfg(target_os = "linux")]
+    if let Ok(exec) = std::env::var(AUTOSTART_EXEC_ENV) {
+        if !exec.is_empty() {
+            let name = app.config().identifier.as_str();
+            let auto = auto_launch::AutoLaunch::new(
+                name,
+                &exec,
+                LinuxLaunchMode::XdgAutostart,
+                &[] as &[&str],
+            );
+            return auto.is_enabled().map_err(|e| e.to_string());
+        }
+    }
     app.autolaunch().is_enabled().map_err(|e| e.to_string())
 }
 
 #[cfg(feature = "autostart")]
 #[tauri::command]
 fn set_autostart_enabled(app: tauri::AppHandle, enabled: bool) -> Result<(), String> {
+    #[cfg(target_os = "linux")]
+    if let Ok(exec) = std::env::var(AUTOSTART_EXEC_ENV) {
+        if !exec.is_empty() {
+            let name = app.config().identifier.as_str();
+            let auto = auto_launch::AutoLaunch::new(
+                name,
+                &exec,
+                LinuxLaunchMode::XdgAutostart,
+                &[] as &[&str],
+            );
+            return if enabled {
+                auto.enable().map_err(|e| e.to_string())
+            } else {
+                auto.disable().map_err(|e| e.to_string())
+            };
+        }
+    }
     if enabled {
         app.autolaunch().enable().map_err(|e| e.to_string())
     } else {
@@ -783,6 +821,8 @@ fn main() {
         None::<Vec<&str>>,
     ));
 
+    // mut required on macOS for set_activation_policy() after build; allow on other platforms to avoid warning
+    #[cfg_attr(not(target_os = "macos"), allow(unused_mut))]
     let mut app = builder
         .manage(state.clone())
         .setup(|app| {
