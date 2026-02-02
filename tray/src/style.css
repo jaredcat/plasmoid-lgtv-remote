@@ -119,6 +119,7 @@ header h1 {
   gap: 8px;
   font-size: 13px;
   color: var(--text-secondary);
+  min-height: 36px;
 }
 
 .btn-status-connect {
