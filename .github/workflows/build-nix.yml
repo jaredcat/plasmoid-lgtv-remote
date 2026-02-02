@@ -29,4 +29,4 @@ jobs:
 
       - name: Build lgtv-tray
         run: nix build .#default --print-build-logs
-        working-directory: lgtv-tray-remote
+        working-directory: tray
