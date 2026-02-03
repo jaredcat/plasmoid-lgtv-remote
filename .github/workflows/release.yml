@@ -75,13 +75,13 @@ jobs:
 
             ### Downloads
 
-            **KDE Plasma Widget** (Linux with KDE Plasma 6):
-            - `lgtv-remote.plasmoid` - Install via System Settings or `kpackagetool6 -t Plasma/Applet -i lgtv-remote.plasmoid`
-
-            **Cross-Platform Tray App**:
+            **Cross-Platform Tray App** (Windows, macOS, Linux):
             - **Windows**: `.msi` (installer) or `.exe` (portable)
             - **macOS**: `.dmg` (Intel: x64, Apple Silicon: arm64)
             - **Linux**: `.AppImage` (universal), `.deb` (Debian/Ubuntu), `.rpm` (Fedora/RHEL)
+
+            **KDE Plasma Widget** (Linux with KDE Plasma 6):
+            - `lgtv-remote.plasmoid` - Install via System Settings or `kpackagetool6 -t Plasma/Applet -i lgtv-remote.plasmoid`
 
             ### First-Time Setup
             1. Enter your TV's IP address (find in TV Settings → Network)
