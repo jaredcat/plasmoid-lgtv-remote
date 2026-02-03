@@ -61,8 +61,52 @@ jobs:
       - name: Flatten artifacts
         run: |
           mkdir -p release
+          # Installers and plasmoid
           find artifacts -type f \( -name "*.plasmoid" -o -name "*.deb" -o -name "*.rpm" -o -name "*.AppImage" -o -name "*.msi" -o -name "*.exe" -o -name "*.dmg" \) -exec cp {} release/ \;
+          # Updater signatures for Linux and Windows (macOS handled below with renamed .tar.gz)
+          find artifacts/lgtv-tray-linux -type f -name "*.sig" -exec cp {} release/ \; 2>/dev/null || true
+          find artifacts/lgtv-tray-windows -type f -name "*.sig" -exec cp {} release/ \; 2>/dev/null || true
+          # macOS updater bundles (rename so arm64 and x64 don't overwrite)
+          for f in artifacts/lgtv-tray-macos-arm64/*.app.tar.gz; do [ -f "$f" ] && cp "$f" release/lgtv-remote-darwin-aarch64.tar.gz; done
+          for f in artifacts/lgtv-tray-macos-arm64/*.app.tar.gz.sig; do [ -f "$f" ] && cp "$f" release/lgtv-remote-darwin-aarch64.tar.gz.sig; done
+          for f in artifacts/lgtv-tray-macos-x64/*.app.tar.gz; do [ -f "$f" ] && cp "$f" release/lgtv-remote-darwin-x86_64.tar.gz; done
+          for f in artifacts/lgtv-tray-macos-x64/*.app.tar.gz.sig; do [ -f "$f" ] && cp "$f" release/lgtv-remote-darwin-x86_64.tar.gz.sig; done
           ls -la release/
+
+      - name: Generate latest.json for updater
+        id: latest
+        run: |
+          TAG="${{ needs.prepare.outputs.version }}"
+          BASE="https://github.com/${{ github.repository }}/releases/download/${TAG}"
+          PUB_DATE=$(date -u +%Y-%m-%dT%H:%M:%SZ)
+          # Build platforms JSON: for each bundle add url and signature from .sig file
+          PLATFORMS='{}'
+          for app in release/*.AppImage; do
+            [ -f "$app" ] || continue
+            name=$(basename "$app")
+            sig=$(cat "release/${name}.sig" 2>/dev/null | tr -d '\n')
+            [ -n "$sig" ] && PLATFORMS=$(echo "$PLATFORMS" | jq --arg url "${BASE}/${name}" --arg sig "$sig" '. + {"linux-x86_64": {"url": $url, "signature": $sig}}')
+          done
+          for msi in release/*.msi; do
+            [ -f "$msi" ] || continue
+            name=$(basename "$msi")
+            sig=$(cat "release/${name}.sig" 2>/dev/null | tr -d '\n')
+            [ -n "$sig" ] && PLATFORMS=$(echo "$PLATFORMS" | jq --arg url "${BASE}/${name}" --arg sig "$sig" '. + {"windows-x86_64": {"url": $url, "signature": $sig}}')
+          done
+          for tgz in release/lgtv-remote-darwin-aarch64.tar.gz; do
+            [ -f "$tgz" ] || continue
+            name=$(basename "$tgz")
+            sig=$(cat "release/${name}.sig" 2>/dev/null | tr -d '\n')
+            [ -n "$sig" ] && PLATFORMS=$(echo "$PLATFORMS" | jq --arg url "${BASE}/${name}" --arg sig "$sig" '. + {"darwin-aarch64": {"url": $url, "signature": $sig}}')
+          done
+          for tgz in release/lgtv-remote-darwin-x86_64.tar.gz; do
+            [ -f "$tgz" ] || continue
+            name=$(basename "$tgz")
+            sig=$(cat "release/${name}.sig" 2>/dev/null | tr -d '\n')
+            [ -n "$sig" ] && PLATFORMS=$(echo "$PLATFORMS" | jq --arg url "${BASE}/${name}" --arg sig "$sig" '. + {"darwin-x86_64": {"url": $url, "signature": $sig}}')
+          done
+          echo "{\"version\": \"${TAG#v}\", \"notes\": \"\", \"pub_date\": \"${PUB_DATE}\", \"platforms\": $PLATFORMS}" > release/latest.json
+          cat release/latest.json
 
       - name: Create Release
         uses: softprops/action-gh-release@v1

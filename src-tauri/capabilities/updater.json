@@ -1,0 +1,8 @@
+{
+  "identifier": "updater",
+  "description": "Check for and install app updates",
+  "windows": ["main"],
+  "permissions": [
+    "updater:default"
+  ]
+}

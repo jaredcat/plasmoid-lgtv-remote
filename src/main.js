@@ -1067,6 +1067,10 @@ document.addEventListener('DOMContentLoaded', () => {
   listenRunCommand();
   listenConnectionLost();
   listenUpdateCheckResult();
+  // Auto-check for updates shortly after startup (only in production)
+  if (window.__TAURI__?.invoke) {
+    setTimeout(() => checkForUpdates(), 1500);
+  }
 });
 
 function listenRunCommand() {

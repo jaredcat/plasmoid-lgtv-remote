@@ -273,6 +273,24 @@ Settings are stored in:
 
 ## Development
 
+### Auto-update (for maintainers)
+
+The tray app checks for updates on startup and shows a banner when a new version is available. To enable signed updates:
+
+1. **Generate a key pair** (once):
+   ```bash
+   npm run tauri signer generate -- -w ~/.tauri/lgtv-remote.key
+   ```
+   This creates `~/.tauri/lgtv-remote.key` (private) and `~/.tauri/lgtv-remote.key.pub` (public).
+
+2. **Set the public key** in `src-tauri/tauri.conf.json`: replace `REPLACE_WITH_PUBLIC_KEY` with the **contents** of the `.pub` file (not a path).
+
+3. **GitHub Actions**: Add repository secrets for release builds:
+   - `TAURI_SIGNING_PRIVATE_KEY`: path to the private key file, or the raw key content
+   - `TAURI_SIGNING_PRIVATE_KEY_PASSWORD`: (optional) password if the key is encrypted
+
+Releases created via the [Release workflow](.github/workflows/release.yml) (on version tags) will then include updater artifacts and a `latest.json` so installed apps can update from **Releases → Latest**.
+
 ### Cross-Compilation
 
 Build for other platforms:
