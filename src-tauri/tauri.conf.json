@@ -2,7 +2,7 @@
   "$schema": "https://schema.tauri.app/config/2",
   "productName": "LG TV Remote",
   "version": "1.4.0",
-  "identifier": "com.lgtv.remote",
+  "identifier": "com.codekitties.lgtv.remote",
   "build": {
     "frontendDist": "../src"
   },
