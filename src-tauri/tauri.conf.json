@@ -23,9 +23,9 @@
       }
     ],
     "security": {
-      "csp": null
-    },
-    "capabilities": ["autostart", "updater"]
+      "csp": null,
+      "capabilities": ["autostart", "updater"]
+    }
   },
   "plugins": {
     "updater": {
