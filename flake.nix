@@ -98,8 +98,6 @@
           nativeBuildInputs = with pkgs; [
             pkg-config
             cargo-tauri
-            librsvg
-            imagemagick
             makeWrapper
             copyDesktopItems
             fontconfig
@@ -108,15 +106,6 @@
           ];
 
           inherit buildInputs;
-
-          postPatch = ''
-            patchShebangs generate-icons.sh
-          '';
-
-          preBuild = ''
-            # Generate icons
-            ./generate-icons.sh
-          '';
 
           # Skip default cargo build, use tauri instead
           buildPhase = ''
