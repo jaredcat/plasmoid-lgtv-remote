@@ -53,6 +53,7 @@ jobs:
         uses: Swatinem/rust-cache@v2
         with:
           workspaces: './src-tauri -> target'
+          cache-targets: true
 
       - name: Update version in Tauri config
         shell: bash
@@ -64,14 +65,13 @@ jobs:
           sed -i.bak "s/version = \"[^\"]*\";/version = \"$VERSION\";/" flake.nix
           rm -f src-tauri/Cargo.toml.bak src-tauri/tauri.conf.json.bak flake.nix.bak
 
-      - name: Install Tauri CLI
-        run: cargo install tauri-cli
-
       - name: Build Tauri app
         env:
           TAURI_SIGNING_PRIVATE_KEY: ${{ secrets.TAURI_SIGNING_PRIVATE_KEY }}
           TAURI_SIGNING_PRIVATE_KEY_PASSWORD: ${{ secrets.TAURI_SIGNING_PRIVATE_KEY_PASSWORD }}
-        run: cargo tauri build ${{ matrix.args }}
+        run: |
+          cargo install tauri-cli --locked
+          cargo tauri build ${{ matrix.args }}
 
       - name: Upload Linux artifacts
         if: matrix.platform == 'ubuntu-22.04'

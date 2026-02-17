@@ -29,7 +29,7 @@
   },
   "plugins": {
     "updater": {
-      "pubkey": "dW50cnVzdGVkIGNvbW1lbnQ6IG1pbmlzaWduIHB1YmxpYyBrZXk6IDU3NkUzQURDRTc5NDUxODkKUldTSlVaVG4zRHB1Vnk4REJjYVlKK0Q4NDBSUGlVRjVLSlRCS21KdzhxbUxsR3JZZ2ZoUFJOVFgK",
+      "pubkey": "dW50cnVzdGVkIGNvbW1lbnQ6IG1pbmlzaWduIHB1YmxpYyBrZXk6IDc0MUY0RkE0NTY5QTkyMEMKUldRTWtwcFdwRThmZEpwSVFjTi9UbTgyN09venk3TE1JejVaS3VaUllHd0hqNGJieEZrUjVmZWwK",
       "endpoints": [
         "https://github.com/jaredcat/plasmoid-lgtv-remote/releases/latest/download/latest.json"
       ]
